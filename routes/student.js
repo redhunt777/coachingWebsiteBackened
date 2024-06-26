@@ -78,7 +78,12 @@ router.patch("/update", verifyUser, (req, res) => {
 router.get("/logout", (req, res) => {
   console.log("logout");
   res
-    .clearCookie("token", { path: "/" })
+    .clearCookie("token", {
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None", // Adjust as per your needs
+    })
     .json({ status: true, message: "logged out" });
 });
 
