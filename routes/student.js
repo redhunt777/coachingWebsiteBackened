@@ -23,9 +23,9 @@ router.post("/resetPassword/:token", async (req, res) =>
 );
 
 const verifyUser = async (req, res, next) => {
+  const token = req.cookies.token;
+  console.log(token);
   try {
-    const token = req.cookie.token;
-    console.log(token);
     if (!token) {
       return res.json({ status: false, message: "Token not found" });
     }
