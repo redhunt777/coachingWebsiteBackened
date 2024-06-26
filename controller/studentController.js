@@ -6,78 +6,76 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const signup = async (req, res) => {
-  {
-    const data = req.body;
-    Student.find({ email: data.email }).then((student) => {
-      if (student.length) {
-        res.json({ message: "Student already registered" });
-      } else {
-        bcrypt.hash(data.password, 10, (err, hash) => {
-          const student = new Student({
-            name: data.name,
-            email: data.email,
-            password: hash,
-            class: data.class,
-            board: data.board,
-            medium: data.medium,
-          });
-          student.save();
-          res.json({
-            status: true,
-            message: "Student registered successfully",
-          });
-        });
-      }
+  const data = req.body;
+  try {
+    const existingStudent = await Student.findOne({ email: data.email });
+    if (existingStudent) {
+      return res.json({ status: false, message: "Student already registered" });
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const student = new Student({
+      name: data.name,
+      email: data.email,
+      password: hashedPassword,
+      class: data.class,
+      board: data.board,
+      medium: data.medium,
     });
+    await student.save();
+    res.json({ status: true, message: "Student registered successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
 const login = async (req, res) => {
   const data = req.body;
-  await Student.find({ email: data.email }).then((student) => {
-    if (student.length) {
-      bcrypt.compare(data.password, student[0].password, (err, result) => {
-        if (result) {
-          const token = jwt.sign(
-            { email: student[0].email },
-            process.env.JWT_KEY,
-            {
-              expiresIn: "24h",
-            }
-          );
-          res
-            .cookie("token", token, {
-              httpOnly: true,
-              sameSite: "None", // Allows cross-site cookies; use 'Strict' or 'Lax' if not needed
-              maxAge: 24 * 60 * 60 * 1000,
-              path: "/", // cookie will be sent for all routes
-            })
-            .json({ status: true, message: "Login successful" });
-        } else {
-          res.json({ status: false, message: "Invalid password" });
-        }
-      });
-    } else {
-      res.json({ status: false, message: "Student not registered" });
+  try {
+    const student = await Student.findOne({ email: data.email });
+    if (!student) {
+      return res.json({ status: false, message: "Student not registered" });
     }
-  });
+
+    const match = await bcrypt.compare(data.password, student.password);
+    if (!match) {
+      return res.json({ status: false, message: "Invalid password" });
+    }
+
+    const token = jwt.sign({ email: student.email }, process.env.JWT_KEY, {
+      expiresIn: "24h",
+    });
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // Ensure secure cookies in production
+        sameSite: "None", // Allows cross-site cookies; use 'Strict' or 'Lax' if not needed
+        maxAge: 24 * 60 * 60 * 1000,
+        path: "/", // Cookie will be sent for all routes
+      })
+      .json({ status: true, message: "Login successful" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
 };
 
 const forgotPassword = async (req, res) => {
   const data = req.body;
   try {
-    const student = await Student.find({ email: data.email });
-    if (!student.length) {
-      console.log("User Doesn't Exist!");
-      return res.json({ status: false, message: "User Doesn't Exist!" });
-    } else {
-      const token = jwt.sign({ email: student[0].email }, process.env.JWT_KEY, {
-        expiresIn: "5m",
-      });
-      sendMailFunc(data, token, res);
+    const student = await Student.findOne({ email: data.email });
+    if (!student) {
+      return res.json({ status: false, message: "User doesn't exist!" });
     }
+
+    const token = jwt.sign({ email: student.email }, process.env.JWT_KEY, {
+      expiresIn: "5m",
+    });
+    sendMailFunc(data, token, res);
   } catch (err) {
     console.log(err);
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
@@ -86,20 +84,20 @@ const resetPassword = async (req, res) => {
   const token = req.params.token;
   try {
     const decoded = jwt.verify(token, process.env.JWT_KEY);
-    const student = await Student.find({ email: decoded.email });
-    if (!student.length) {
-      console.log("User Doesn't Exist!");
-      return res.json({ status: false, message: "User Doesn't Exist!" });
-    } else {
-      bcrypt.hash(data.password, 10, (err, hash) => {
-        Student.updateOne(
-          { email: decoded.email },
-          { $set: { password: hash } }
-        ).then(res.json({ status: true, message: "password updated" }));
-      });
+    const student = await Student.findOne({ email: decoded.email });
+    if (!student) {
+      return res.json({ status: false, message: "User doesn't exist!" });
     }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    await Student.updateOne(
+      { email: decoded.email },
+      { $set: { password: hashedPassword } }
+    );
+    res.json({ status: true, message: "Password updated" });
   } catch (err) {
     console.log(err);
+    res.status(500).json({ status: false, message: "Server error" });
   }
 };
 
