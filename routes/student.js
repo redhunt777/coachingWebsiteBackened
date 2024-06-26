@@ -24,7 +24,6 @@ router.post("/resetPassword/:token", async (req, res) =>
 
 const verifyUser = async (req, res, next) => {
   const token = req.cookies.token;
-  console.log(token);
   try {
     if (!token) {
       return res.json({ status: false, message: "Token not found" });
@@ -77,6 +76,7 @@ router.patch("/update", verifyUser, (req, res) => {
 });
 
 router.get("/logout", (req, res) => {
+  console.log("logout");
   res.clearCookie("token").json({ status: true, message: "logged out" });
 });
 
