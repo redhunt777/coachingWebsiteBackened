@@ -31,10 +31,10 @@ const mongoURI = process.env.DB_URL;
 //     credentials: true,
 //   })
 // );
+app.use(cookieParser());
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 app.use(morgan("dev"));
-app.use(cookieParser());
 app.use(urlencoded({ extended: true }));
 app.use("/ncert", ncertRouter);
 app.use("/auth", studentRouter);
