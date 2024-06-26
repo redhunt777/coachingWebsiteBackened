@@ -50,6 +50,7 @@ const login = async (req, res) => {
               httpOnly: true,
               sameSite: "None", // Allows cross-site cookies; use 'Strict' or 'Lax' if not needed
               maxAge: 24 * 60 * 60 * 1000,
+              path: "/", // cookie will be sent for all routes
             })
             .json({ status: true, message: "Login successful" });
         } else {
