@@ -77,7 +77,9 @@ router.patch("/update", verifyUser, (req, res) => {
 
 router.get("/logout", (req, res) => {
   console.log("logout");
-  res.clearCookie("token").json({ status: true, message: "logged out" });
+  res
+    .clearCookie("token", { path: "/" })
+    .json({ status: true, message: "logged out" });
 });
 
 export default router;
