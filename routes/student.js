@@ -40,10 +40,6 @@ const verifyUser = async (req, res, next) => {
 };
 
 router.get("/verify", verifyUser, (req, res) => {
-  res.json({ status: true, message: "User verified" });
-});
-
-router.get("/data", verifyUser, (req, res) => {
   const token = req.cookies.token;
   jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
     Student.find({ email: decoded.email }).then((student) => {
@@ -53,6 +49,8 @@ router.get("/data", verifyUser, (req, res) => {
         class: student[0].class,
         board: student[0].board,
         medium: student[0].medium,
+        status: true,
+        message: "User verified",
       });
     });
   });
