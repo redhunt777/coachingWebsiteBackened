@@ -27,4 +27,29 @@ function sendMailFunc(data, token, res) {
   });
 }
 
-export default sendMailFunc;
+function sendOtpFunc(email, otp, res) {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.G_USER,
+      pass: process.env.G_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.G_USER,
+    to: email,
+    subject: "OTP from akshay classes",
+    text: `Do not share this OTP to anyone, Your OTP is ${otp}`,
+  };
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      return res.json({ status: false, message: "error sending mail" });
+    } else {
+      return res.json({ status: true, message: "Otp is sent to your Email" });
+    }
+  });
+}
+
+export { sendMailFunc, sendOtpFunc };

@@ -1,7 +1,7 @@
 import Student from "../models/student.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import sendMailFunc from "../Email/transporter.js";
+import { sendMailFunc } from "../Email/transporter.js";
 import dotenv from "dotenv";
 dotenv.config();
 

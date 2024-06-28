@@ -2,6 +2,8 @@ import express from "express";
 import Student from "../models/student.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import otplib from "otplib";
+import { sendOtpFunc } from "../Email/transporter.js";
 import {
   signup,
   login,
@@ -13,14 +15,71 @@ dotenv.config();
 const router = express.Router();
 
 router.post("/signup", (req, res) => signup(req, res));
-
 router.post("/login", (req, res) => login(req, res));
-
 router.post("/forgotPassword", (req, res) => forgotPassword(req, res));
-
 router.post("/resetPassword/:token", async (req, res) =>
   resetPassword(req, res)
 );
+
+let otpStore = {}; // In-memory store for OTPs (for demo purposes)
+
+// Ensure otplib is correctly configured
+otplib.authenticator.options = {
+  step: 30, // The time step used for generating the OTP (default is 30 seconds)
+  window: 1, // The allowable window for OTP verification (default is 1)
+  digits: 6, // The number of digits in the OTP (default is 6)
+  algorithm: "sha1", // The algorithm used for OTP generation (default is 'SHA-1')
+};
+
+router.post("/generate-otp", async (req, res) => {
+  const { email } = req.body;
+
+  // Check if the email is already registered
+  const student = await Student.findOne({ email });
+  if (student) {
+    return res.json({ status: false, message: "Student already registered" });
+  }
+
+  const secret = otplib.authenticator.generateSecret();
+  const otp = otplib.authenticator.generate(secret);
+
+  // Store the OTP and secret for verification
+  otpStore[email] = { otp, secret };
+
+  console.log(`Generated OTP for ${email}: ${otp}`);
+  console.log(`Secret for ${email}: ${secret}`);
+
+  // Send the OTP via email
+  sendOtpFunc(email, otp, res);
+});
+
+router.post("/verify-otp", (req, res) => {
+  const { email, otp } = req.body;
+
+  // Check if the OTP is stored
+  if (!otpStore[email]) {
+    return res.json({
+      status: false,
+      message: "OTP not found or email invalid",
+    });
+  }
+
+  const { secret } = otpStore[email];
+
+  console.log(`Verifying OTP for ${email}: ${otp}`);
+  console.log(`Stored Secret for ${email}: ${secret}`);
+
+  const isValid = otplib.authenticator.check(otp, secret);
+
+  console.log(`OTP Valid: ${isValid}`);
+
+  if (isValid) {
+    delete otpStore[email]; // Clear the OTP after successful validation
+    res.json({ status: true, message: "OTP verified" });
+  } else {
+    res.json({ status: false, message: "Invalid OTP" });
+  }
+});
 
 const verifyUser = async (req, res, next) => {
   const token = req.cookies.token;
