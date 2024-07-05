@@ -11,12 +11,16 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/dist/(.*)",
+      "dest": "/dist/"
+    },
+    {
+      "src": "/files/(.*)",
       "dest": "/server.js"
     },
     {
-      "src": "/dist/(.*)",
-      "dest": "/dist/$1"
+      "src": "/(.*)",
+      "dest": "/server.js"
     }
   ]
 }
