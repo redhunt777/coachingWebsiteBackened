@@ -27,7 +27,7 @@ let otpStore = {}; // In-memory store for OTPs (for demo purposes)
 otplib.authenticator.options = {
   step: 30, // The time step used for generating the OTP (default is 30 seconds)
   window: 1, // The allowable window for OTP verification (default is 1)
-  digits: 6, // The number of digits in the OTP (default is 6)
+  digits: 6,
   algorithm: "sha1", // The algorithm used for OTP generation (default is 'SHA-1')
 };
 
