@@ -19,11 +19,15 @@ import Syllabus from "./models/syllabus.js";
 import Dpp from "./models/dpp.js";
 import dppRouter from "./routes/dpp.js";
 import morgan from "morgan";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
 const app = express();
 const mongoURI = process.env.DB_URL;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // app.use(
 //   cors({
@@ -34,6 +38,7 @@ const mongoURI = process.env.DB_URL;
 app.use(cookieParser());
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "dist")));
 app.use(morgan("dev"));
 app.use(urlencoded({ extended: true }));
 app.use("/ncert", ncertRouter);
@@ -184,6 +189,10 @@ app.get("/files/:filename", async (req, res) => {
     console.error(err);
     res.status(500).json({ err: "Internal Server Error" });
   }
+});
+
+app.use("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 app.listen(process.env.PORT, () => {
