@@ -15,7 +15,7 @@ function sendMailFunc(data, token, res) {
     from: process.env.G_USER,
     to: data.email,
     subject: "Password reset link from akshay classes",
-    text: `Do not share this link to anyone, Click on the link to reset your password ${process.env.CORS_URL}/resetPassword/${token}`,
+    text: `Do not share this link to anyone, Click on the link to reset your password ${process.env.FORGOT_URL}/resetPassword/${token}`,
   };
 
   transporter.sendMail(mailOptions, function (error, info) {
